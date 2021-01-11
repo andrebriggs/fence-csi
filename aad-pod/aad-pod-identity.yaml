@@ -1,0 +1,487 @@
+# kubectl create namespace "aad-pod-identity"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: mic
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-mic
+  namespace: aad-pod-identity
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: nmi
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-nmi
+  namespace: aad-pod-identity
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: mic
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-mic
+  namespace: aad-pod-identity
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - nodes
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - create
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - create
+  - get
+  - update
+- apiGroups:
+  - aadpodidentity.k8s.io
+  resources:
+  - azureidentitybindings
+  - azureidentities
+  verbs:
+  - get
+  - list
+  - watch
+  - post
+  - update
+- apiGroups:
+  - aadpodidentity.k8s.io
+  resources:
+  - azurepodidentityexceptions
+  verbs:
+  - list
+  - update
+- apiGroups:
+  - aadpodidentity.k8s.io
+  resources:
+  - azureassignedidentities
+  verbs:
+  - '*'
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: nmi
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-nmi
+  namespace: aad-pod-identity
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - aadpodidentity.k8s.io
+  resources:
+  - azureidentitybindings
+  - azureidentities
+  - azurepodidentityexceptions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - aadpodidentity.k8s.io
+  resources:
+  - azureassignedidentities
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: mic
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-mic
+  namespace: aad-pod-identity
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aad-pod-identity-mic
+subjects:
+- kind: ServiceAccount
+  name: aad-pod-identity-mic
+  namespace: aad-pod-identity
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: nmi
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-nmi
+  namespace: aad-pod-identity
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aad-pod-identity-nmi
+subjects:
+- kind: ServiceAccount
+  name: aad-pod-identity-nmi
+  namespace: aad-pod-identity
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    description: Deploy components for aad-pod-identity
+  labels:
+    app.kubernetes.io/component: nmi
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+    tier: node
+  name: aad-pod-identity-nmi
+  namespace: aad-pod-identity
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: nmi
+      app.kubernetes.io/instance: aad-pod-identity
+      app.kubernetes.io/name: aad-pod-identity
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9090"
+        prometheus.io/scrape: "true"
+      labels:
+        app.kubernetes.io/component: nmi
+        app.kubernetes.io/instance: aad-pod-identity
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: aad-pod-identity
+        helm.sh/chart: aad-pod-identity-2.0.0
+        tier: node
+    spec:
+      containers:
+      - args:
+        - --host-ip=$(HOST_IP)
+        - --node=$(NODE_NAME)
+        - --prometheus-port=9090
+        - --operation-mode=standard
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: FORCENAMESPACED
+          value: "false"
+        image: mcr.microsoft.com/k8s/aad-pod-identity/nmi:1.6.1
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        name: nmi
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+          privileged: true
+        volumeMounts:
+        - mountPath: /run/xtables.lock
+          name: iptableslock
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      serviceAccountName: aad-pod-identity-nmi
+      volumes:
+      - hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
+        name: iptableslock
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    description: Deploy components for aad-pod-identity
+  labels:
+    app.kubernetes.io/component: mic
+    app.kubernetes.io/instance: aad-pod-identity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: aad-pod-identity
+    helm.sh/chart: aad-pod-identity-2.0.0
+  name: aad-pod-identity-mic
+  namespace: aad-pod-identity
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: mic
+      app.kubernetes.io/instance: aad-pod-identity
+      app.kubernetes.io/name: aad-pod-identity
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8888"
+        prometheus.io/scrape: "true"
+      labels:
+        app.kubernetes.io/component: mic
+        app.kubernetes.io/instance: aad-pod-identity
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: aad-pod-identity
+        helm.sh/chart: aad-pod-identity-2.0.0
+    spec:
+      containers:
+      - args:
+        - --cloudconfig=/etc/kubernetes/azure.json
+        - --logtostderr
+        - --prometheus-port=8888
+        env:
+        - name: MIC_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: FORCENAMESPACED
+          value: "false"
+        image: mcr.microsoft.com/k8s/aad-pod-identity/mic:1.6.1
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        name: mic
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /etc/kubernetes/certs
+          name: certificates
+          readOnly: true
+        - mountPath: /etc/kubernetes/azure.json
+          name: k8s-azure-file
+          readOnly: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      serviceAccountName: aad-pod-identity-mic
+      volumes:
+      - hostPath:
+          path: /etc/kubernetes/certs
+        name: certificates
+      - hostPath:
+          path: /etc/kubernetes/azure.json
+        name: k8s-azure-file
+
+---
+apiVersion: aadpodidentity.k8s.io/v1
+kind: AzurePodIdentityException
+metadata:
+  name: mic
+  namespace: aad-pod-identity
+spec:
+  podLabels:
+    app: mic
+    app.kubernetes.io/component: mic
+    component: mic
+
+---
+# apiVersion: v1
+# items:
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentity
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: svc-exports-identity
+#     namespace: default
+#   spec:
+#     clientID: 68b915da-9bd5-4325-9053-ca02b374377a
+#     resourceID: /subscriptions/96700ec4-de78-49d9-ab4e-74916503ba46/resourceGroups/MC_rg-ens-dev_ens-dev-ihcn-aks_westus2/providers/Microsoft.ManagedIdentity/userAssignedIdentities/svc-exports-identity
+#     type: 0
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentityBinding
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: svc-exports-identity-binding
+#     namespace: default
+#   spec:
+#     azureIdentity: svc-exports-identity
+#     selector: svc-exports-identity
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentity
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: svc-exposures-identity
+#     namespace: default
+#   spec:
+#     clientID: 3a39e90c-5adf-4ef0-8ebd-a5558673ea20
+#     resourceID: /subscriptions/96700ec4-de78-49d9-ab4e-74916503ba46/resourceGroups/MC_rg-ens-dev_ens-dev-ihcn-aks_westus2/providers/Microsoft.ManagedIdentity/userAssignedIdentities/svc-exposures-identity
+#     type: 0
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentityBinding
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: svc-exposures-identity-binding
+#     namespace: default
+#   spec:
+#     azureIdentity: svc-exposures-identity
+#     selector: svc-exposures-identity
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentity
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: job-migrate-identity
+#     namespace: default
+#   spec:
+#     clientID: 065394fa-5c55-4ddc-b635-14e0556bff56
+#     resourceID: /subscriptions/96700ec4-de78-49d9-ab4e-74916503ba46/resourcegroups/MC_rg-ens-dev_ens-dev-ihcn-aks_westus2/providers/Microsoft.ManagedIdentity/userAssignedIdentities/job-migrate-identity
+#     type: 0
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentityBinding
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: job-migrate-identity-binding
+#     namespace: default
+#   spec:
+#     azureIdentity: job-migrate-identity
+#     selector: job-migrate-identity
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentity
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: cert-manager-identity
+#     namespace: cert-manager
+#   spec:
+#     clientID: 28227484-d3b2-46cf-9c10-72561777eebf
+#     resourceID: /subscriptions/96700ec4-de78-49d9-ab4e-74916503ba46/resourceGroups/MC_rg-ens-dev_ens-dev-ihcn-aks_westus2/providers/Microsoft.ManagedIdentity/userAssignedIdentities/cert-manager-identity
+#     type: 0
+# - apiVersion: aadpodidentity.k8s.io/v1
+#   kind: AzureIdentityBinding
+#   metadata:
+#     labels:
+#       app.kubernetes.io/instance: aad-pod-identity
+#       app.kubernetes.io/managed-by: Helm
+#       app.kubernetes.io/name: aad-pod-identity
+#       helm.sh/chart: aad-pod-identity-2.0.0
+#     name: cert-manager-identity-binding
+#     namespace: cert-manager
+#   spec:
+#     azureIdentity: cert-manager-identity
+#     selector: cert-manager-identity
+# kind: List

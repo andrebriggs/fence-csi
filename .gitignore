@@ -1,0 +1,4 @@
+.azure_output
+.azure_secret
+/secrets
+.env

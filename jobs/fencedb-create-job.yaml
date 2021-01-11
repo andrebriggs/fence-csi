@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fencedb-create
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: gen3job
+        aadpodidbinding: azure-pod-identity-binding-selector
+    spec:
+      automountServiceAccountToken: false
+      volumes:
+        # - name: creds-volume
+        #   secret:
+        #     secretName: "fence-creds"
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: azure-kvname
+      containers:
+      - name: fence
+        image: "andrebriggs/fence:latest"
+        imagePullPolicy: Always
+        env:
+          - name: PYTHONPATH
+            value: /var/www/fence
+        volumeMounts:
+          # - name: "creds-volume"
+          #   readOnly: true
+          #   mountPath: "/var/www/fence/creds.json"
+          #   subPath: creds.json
+          - name: secrets-store-inline
+            mountPath: "/mnt/secrets-store"
+            readOnly: true
+        command: ["/bin/bash" ]
+        args:
+          - "-c"
+          # Script always succeeds if it runs (echo exits with 0)
+          - |
+            eval $(python 2> /dev/null <<EOM
+            import json
+ 
+            creds = json.load(open('/mnt/secrets-store/fence-creds', 'r'))
+            print('declare -A db_creds')
+            for key in ['db_host', 'db_username', 'db_password', 'db_database']:
+              print("db_creds['%s']='%s'" % (key, creds[key]))
+            EOM
+            )
+            userdatamodel-init --username "${db_creds[db_username]}" --password "${db_creds[db_password]}" --host "${db_creds[db_host]}" --db "${db_creds[db_database]}"
+            echo "Exit code: $?"
+        # command: ["/bin/bash" ]
+        # args:
+        #   - "-c"
+        #   # Script always succeeds if it runs (echo exits with 0)
+        #   - |
+        #     eval $(python 2> /dev/null <<EOM
+        #     import json
+ 
+        #     creds = json.load(open('/var/www/fence/creds.json', 'r'))
+        #     print('declare -A db_creds')
+        #     for key in ['db_host', 'db_username', 'db_password', 'db_database']:
+        #       print("db_creds['%s']='%s'" % (key, creds[key]))
+        #     EOM
+        #     )
+        #     userdatamodel-init --username "${db_creds[db_username]}" --password "${db_creds[db_password]}" --host "${db_creds[db_host]}" --db "${db_creds[db_database]}"
+        #     echo "Exit code: $?"
+      restartPolicy: Never

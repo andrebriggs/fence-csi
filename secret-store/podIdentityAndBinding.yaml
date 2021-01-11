@@ -1,0 +1,16 @@
+apiVersion: aadpodidentity.k8s.io/v1
+kind: AzureIdentity
+metadata:
+    name: svc-fence-identity              # The name of your Azure identity
+spec:
+    type: 0                                 # Set type: 0 for managed service identity
+    resourceID: /subscriptions/7060bca0-7a3c-44bd-b54c-4bb1e9facfac/resourcegroups/MC_abrig-gen3_abrig-gen3-dev_westus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/svc-fence-identity
+    clientID: "23fdc9b3-7fcd-403b-819b-297bb82fa9fb" #"4fd99a4d-c3cb-4f9e-87a1-ae6f1bc1db4a"     # The clientId of the Azure AD identity that you created earlier
+---
+apiVersion: aadpodidentity.k8s.io/v1
+kind: AzureIdentityBinding
+metadata:
+    name: azure-pod-identity-binding
+spec:
+    azureIdentity: svc-fence-identity      # The name of your Azure identity
+    selector: azure-pod-identity-binding-selector
