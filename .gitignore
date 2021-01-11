@@ -2,3 +2,4 @@
 .azure_secret
 /secrets
 .env
+fence-config.yaml
