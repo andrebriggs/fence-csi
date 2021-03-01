@@ -1,0 +1,68 @@
+kind: Pod 
+apiVersion: v1 
+metadata:
+  name: test-pod
+  labels:
+    app: gen3job
+    aadpodidbinding: azure-pod-identity-binding-selector
+spec:
+  volumes:
+    - name: secrets-store-inline
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: azure-kvname
+  containers:
+  - name: fence
+    image: "andrebriggs/fence:latest"
+    env:
+      - name: PYTHONPATH
+        value: /var/www/fence
+    volumeMounts:
+      - name: secrets-store-inline
+        mountPath: "/mnt/secrets-store"
+        readOnly: true
+    # DEBUG COMMAND: $ kubectl exec --stdin --tty test-pod -- /bin/bash
+    command: ["/bin/bash" ]
+    args:
+      - "-c"
+      - |
+        cd /
+        echo "*** START TLS Certificate Setup ***" 
+        mkdir -p /fence/keys/fenceJwtKeys/
+        
+        echo "Copying public and private keys from secret store mount required Fence location" 
+        cp /mnt/secrets-store/fenceKey /fence/keys/fenceJwtKeys/jwt_public_key.pem
+        # SUPER HACKY. Figure out a cleaner way.
+        cat /mnt/secrets-store/fenceJwtKeys | sed -ne '/-BEGIN PRIVATE KEY-/,/-END PRIVATE KEY-/p' > /fence/keys/fenceJwtKeys/jwt_private_key.pem
+        
+        echo "ls /fence/keys/fenceJwtKeys/"
+        ls /fence/keys/fenceJwtKeys/
+
+        # Consider renaming from cdis.crt to rush-commons.crt?
+        echo "Copying the public gen3-ca-dev cert to ca-certificates location as cdis-ca.crt" 
+        mkdir -p /usr/local/share/ca-certificates/cdis/
+        cp /mnt/secrets-store/gen3-ca-dev /usr/local/share/ca-certificates/cdis/cdis-ca.crt
+
+        echo "ls /usr/local/share/ca-certificates/cdis/"
+        ls /usr/local/share/ca-certificates/cdis/
+        
+        echo "*** END TLS Certificate Setup ***" 
+        # For debug purposes so Pod doesn't enter complete state
+        while true; do sleep 30; done;
+
+        # echo "*** START Database Setup ***" 
+        # eval $(python 2> /dev/null <<EOM
+        # import json
+
+        # creds = json.load(open('/mnt/secrets-store/fence-creds', 'r'))
+        # print('declare -A db_creds')
+        # for key in ['db_host', 'db_username', 'db_password', 'db_database']:
+        #   print("db_creds['%s']='%s'" % (key, creds[key]))
+        # EOM
+        # )
+        # userdatamodel-init --username "${db_creds[db_username]}" --password "${db_creds[db_password]}" --host "${db_creds[db_host]}" --db "${db_creds[db_database]}"
+        # echo "Exit code: $?"
+        # echo "*** END Database Setup ***" 
+

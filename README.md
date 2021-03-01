@@ -10,7 +10,7 @@
 * Create an Azure Identity that has a reader role to Azure KeyVault 
 * Associate the Azure Identity with AAD Pod Identity (in k8s)
 * Correctly labeled k8s deployments use the Azure Identity via AAD Pod Identity and are able to access Azure KeyVault as a mounted volume using the [secrets-store-csi-driver](https://github.com/kubernetes-sigs/secrets-store-csi-driver) and [secrets-store-csi-driver-provider-azure](https://github.com/Azure/secrets-store-csi-driver-provider-azure)
-* A K8S job resource creates pod that initializes the Fence database (creates tables, etc) after loading credentials from a file that is setup in Azure KeyVault  
+* A K8S job resource creates pod that [initializes](https://github.com/uc-cdis/userdatamodel) the Fence database (creates tables, etc) after loading credentials from a file that is setup in Azure KeyVault  
 
 ## Manual Steps for PostGres
 * Create Azure PostgreSQL server

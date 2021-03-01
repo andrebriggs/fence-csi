@@ -3,3 +3,4 @@ az role assignment create --role "Reader" --assignee $clientId --scope /subscrip
 
 az keyvault set-policy -n $VAULT_NAME --secret-permissions get --spn $clientId
 az keyvault set-policy -n $VAULT_NAME --key-permissions get --spn $clientId
+az keyvault set-policy -n $VAULT_NAME --certificate-permissions get --spn $clientId
