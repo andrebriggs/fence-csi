@@ -36,7 +36,6 @@ export RESOURCE_GROUP="Azure resource group name"
 export CLUSTER="AKS Cluster name"
 export STORAGE_ACCOUNT="Azure Storage account name"
 export NODE_RESOURCE_GROUP="Managed cluster resource group <MC_xxxxx>"
-export SUBID="Azure subscription guid"
 export VAULT_NAME="Azure Keyvault name"
 ```
 
